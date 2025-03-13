@@ -42,3 +42,6 @@ if (!defined('LOGIN')) {
 if (!defined('DASH')) {
   define('DASH', BASE_URL . 'pages/dashboards.php');
 }
+if (!defined('CADASTRO_PERFIL')) {
+  define('CADASTRO_PERFIL', BASE_URL . 'pages/perfil/usuarios_cadastrar.php');
+}

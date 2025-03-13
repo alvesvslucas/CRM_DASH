@@ -93,6 +93,9 @@
             <a class="nav-link active" aria-current="page" href="#">Início</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="<?= CADASTRO_PERFIL ?>">Cadastro</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="#">Relatórios</a>
           </li>
           <li class="nav-item">
