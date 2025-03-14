@@ -42,6 +42,20 @@ if (!defined('LOGIN')) {
 if (!defined('DASH')) {
   define('DASH', BASE_URL . 'pages/dashboards.php');
 }
+// Caminho para a criação de perfil de usuários
 if (!defined('CADASTRO_PERFIL')) {
   define('CADASTRO_PERFIL', BASE_URL . 'pages/perfil/usuarios_cadastrar.php');
+}
+if (!defined('CADASTRO_LISTAR')) {
+  define('CADASTRO_LISTAR', BASE_URL . 'pages/perfil/usuarios_listar.php');
+}
+// Caminho para o dashboard do setor Cartão
+if (!defined('DASH_CARTAO')) {
+  define('DASH_CARTAO', BASE_URL . 'pages/cartao/dashboard_cartao.php');
+}
+if (!defined('DIGITACAO_CARTAO')) {
+  define('DIGITACAO_CARTAO', BASE_URL . 'pages/cartao/digitacao_cartao.php');
+}
+if (!defined('AGENTES_CARTAO')) {
+  define('AGENTES_CARTAO', BASE_URL . 'pages/cartao/agentes_cadastrar.php');
 }
