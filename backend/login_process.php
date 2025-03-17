@@ -2,7 +2,7 @@
 session_start();
 include '../db/config.php';  // arquivo de conexão com o banco
 include '../absoluto.php';   // arquivo que retorna o caminho absoluto
-include '(header)'
+include '(header)';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   $username = trim($_POST['username'] ?? '');
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         // Você pode adicionar outros if/elseif para outros setores:
         elseif ($user['setor'] === 'Energia') {
-          // header("Location: " . DASH_ENERGIA);
+          header("Location: " . DASH_ENERGIA);
         } elseif ($user['setor'] === 'Consignado') {
           // header("Location: " . DASH_CONSIGNADO);
         } elseif ($user['setor'] === 'FGTS') {

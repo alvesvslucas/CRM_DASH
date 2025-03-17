@@ -49,6 +49,7 @@ if (!defined('CADASTRO_PERFIL')) {
 if (!defined('CADASTRO_LISTAR')) {
   define('CADASTRO_LISTAR', BASE_URL . 'pages/perfil/usuarios_listar.php');
 }
+
 // Caminho para o dashboard do setor Cartão
 if (!defined('DASH_CARTAO')) {
   define('DASH_CARTAO', BASE_URL . 'pages/cartao/dashboard_cartao.php');
@@ -58,4 +59,11 @@ if (!defined('DIGITACAO_CARTAO')) {
 }
 if (!defined('AGENTES_CARTAO')) {
   define('AGENTES_CARTAO', BASE_URL . 'pages/cartao/agentes_cadastrar.php');
+}
+if (!defined('METAS_CARTAO')) {
+  define('METAS_CARTAO', BASE_URL . 'pages/cartao/gerenciar_metas_cartao.php');
+}
+// Caminho para o dashboard do setor Energia
+if (!defined('DASH_ENERGIA')) {
+  define('DASH_ENERGIA', BASE_URL . 'pages/energia/dashboard_energia.php');
 }
