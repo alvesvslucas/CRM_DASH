@@ -21,13 +21,16 @@ if ($perfil === 'admin') {
       $inicio_link = DASH_ENERGIA;
       break;
     case 'Consignado':
-      // $inicio_link = DASH_CONSIGNADO;
+      $inicio_link = DASH_CONSIGNADO;
+      break;
+    case 'Backoffice':
+      $inicio_link = DASH_BACKOFFICE;
       break;
     case 'FGTS':
-      // $inicio_link = DASH_FGTS;
+      $inicio_link = DASH_FGTS;
       break;
     default:
-      // $inicio_link = DASH_SUPERVISOR;
+      $inicio_link = SAIR;
   }
 } else {
   $inicio_link = DASH;
@@ -40,7 +43,7 @@ if ($perfil === 'admin') {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard</title>
+  <title>CREDASH</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
@@ -54,7 +57,7 @@ if ($perfil === 'admin') {
   <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
     <div class="container-fluid">
       <a class="navbar-brand" href="#">
-        <h1>Cred<span>esh</span></h1>
+        <h1>Cred<span>ash</span></h1>
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,12 +67,13 @@ if ($perfil === 'admin') {
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <!-- Link de Início -->
-          <li class="nav-item">
+          <!-- <li class="nav-item">
             <a class="nav-link active" aria-current="page" href="<?= $inicio_link ?>">Início</a>
-          </li>
+          </li> -->
 
           <?php if ($perfil === 'admin'): ?>
             <!-- Apenas administradores -->
+            <li class="nav-item"><a class="nav-link" href="<?= HOME_ADMIN ?>">Home</a></li>
             <li class="nav-item"><a class="nav-link" href="<?= CADASTRO_PERFIL ?>">Cadastro</a></li>
             <li class="nav-item"><a class="nav-link" href="<?= CADASTRO_LISTAR ?>">Listar Usuários</a></li>
           <?php endif; ?>
@@ -83,6 +87,32 @@ if ($perfil === 'admin') {
 
           <?php if ($perfil === 'supervisor' && $setor === 'Energia'): ?>
             <li class="nav-item"><a class="nav-link" href="<?= DASH_ENERGIA ?>">Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= AGENTES_ENERGIA ?>">Cadastro</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= DIGITACAO_ENERGIA ?>">Digitação</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= GERENCIAR_ENERGIA ?>">Gerenciar Valores</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= METAS_ENERGIA ?>">Metas Time</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= EXPORT_ENERGIA ?>">Exportar</a></li>
+          <?php endif; ?>
+          <?php if ($perfil === 'supervisor' && $setor === 'FGTS'): ?>
+            <li class="nav-item"><a class="nav-link" href="<?= DASH_FGTS ?>">Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= CADASTRO_FGTS ?>">Cadastro</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= DIGITACAO_FGTS ?>">Digitação</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= LISTA_FGTS ?>">Gerenciar Digitação</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= EXPORTAR_FGTS ?>">Exportar</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= METAS_FGTS ?>">Metas</a></li>
+
+          <?php endif; ?>
+          <?php if ($perfil === 'supervisor' && $setor === 'Consignado'): ?>
+            <li class="nav-item"><a class="nav-link" href="<?= DASH_CONSIGNADO ?>">Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= DIAS_CONSIGNADO ?>">Dias Trabalhados</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= RANK_CONSIGNADO ?>">Metas e Ranking</a></li>
+
+          <?php endif; ?>
+          <?php if ($perfil === 'supervisor' && $setor === 'Backoffice'): ?>
+            <li class="nav-item"><a class="nav-link" href="<?= DASH_CONSIGNADO ?>">Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= METAS_BACKOFFICE ?>">Metas</a></li>
+
+
           <?php endif; ?>
 
 

@@ -104,7 +104,7 @@
 <body>
   <div class="container">
     <div class="left">
-      <h1>Cred<span>esh</span></h1>
+      <h1>Cred<span>ash</span></h1>
       <img src="<?php echo ASSET_PATH; ?>/icon1.png" alt="Illustration">
     </div>
     <div class="right">

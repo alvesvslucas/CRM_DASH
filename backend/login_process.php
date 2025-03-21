@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../db/config.php';  // arquivo de conexão com o banco
+include '../db/config1.php';  // arquivo de conexão com o banco
 include '../absoluto.php';   // arquivo que retorna o caminho absoluto
 include '(header)';
 
@@ -39,9 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         elseif ($user['setor'] === 'Energia') {
           header("Location: " . DASH_ENERGIA);
         } elseif ($user['setor'] === 'Consignado') {
-          // header("Location: " . DASH_CONSIGNADO);
+          header("Location: " . DASH_CONSIGNADO);
+        } elseif ($user['setor'] === 'Backoffice') {
+          header("Location: " .  DASH_BACKOFFICE);
         } elseif ($user['setor'] === 'FGTS') {
-          // header("Location: " . DASH_FGTS);
+          header("Location: " . DASH_FGTS);
         } else {
           // Caso o setor não seja reconhecido, redireciona para um dashboard padrão para supervisores
           // header("Location: " . DASH_SUPERVISOR);

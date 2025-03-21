@@ -182,7 +182,7 @@ foreach ($agentsData as $agent) {
   <!-- Topo -->
   <div class="header-bar d-flex align-items-center justify-content-between">
     <div>
-      <h1 class="text-primary">Credesh - Performance Cartão</h1>
+      <h1 class="text-primary">Credash - Performance Cartão</h1>
       <small class="text-muted">Painel de acompanhamento e métricas</small>
     </div>
     <div>

@@ -114,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <option value="">-- Selecione --</option>
             <option value="Energia">Energia</option>
             <option value="Consignado">Consignado</option>
+            <option value="Cartão">Backoffice</option>
             <option value="FGTS">FGTS</option>
             <option value="Cartão">Cartão</option>
           </select>

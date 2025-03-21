@@ -204,6 +204,7 @@ $result = $conn->query($sql);
                 <option value="">-- Selecione --</option>
                 <option value="Energia">Energia</option>
                 <option value="Consignado">Consignado</option>
+                <option value="Backoffice">Backoffice</option>
                 <option value="FGTS">FGTS</option>
                 <option value="Cartão">Cartão</option>
               </select>

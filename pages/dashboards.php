@@ -1,210 +1,402 @@
-<?php include '../absoluto.php';
-include(HEADER_FILE);
-?>
+<?php
+// Inclui o arquivo de configurações e funções
+include '../absoluto.php';         // Arquivo com constantes ou funções gerais, se houver
+include '../db/dashadmin.php';         // Carrega as variáveis de conexão dos DOIS bancos
+include(HEADER_FILE);               // Inclua seu header
 
+// -----------------------------------------------------------------------------
+// Consultas no BANCO 1 (credesh)
+$usersResult           = $conn1->query("SELECT * FROM users");
+$vendasResult          = $conn1->query("SELECT * FROM vendas");
+$vendasCartaoDiaResult = $conn1->query("SELECT * FROM vendas_cartao_dia");
+$vendasEnergiaResult   = $conn1->query("SELECT * FROM vendas_energia");
+
+// Consultas no BANCO 2 (credinowe_consignado_teste)
+$dashboardPresetsResult           = $conn2->query("SELECT * FROM dashboard_presets");
+$diasTrabalhoResult               = $conn2->query("SELECT * FROM dias_trabalho");
+$metasConsignadoResult            = $conn2->query("SELECT * FROM metas_consignado");
+$metasConsultoresConsignadoResult = $conn2->query("SELECT * FROM metas_consultores_consignado");
+$metasSetorConsignadoResult       = $conn2->query("SELECT * FROM metas_setor_consignado");
+?>
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard - Exemplo</title>
+  <title>Dashboard Administrador - Acesso Completo</title>
 
   <!-- Bootstrap CSS -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
   <!-- Estilos adicionais -->
   <style>
     body {
       background-color: #f5f5f5;
     }
-
-    /* Ajuste de espaçamento entre cards e seções */
     .dashboard-section {
       margin-bottom: 30px;
     }
-
     .card-custom {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       border: none;
       border-radius: 8px;
       margin-bottom: 20px;
     }
-
-    .card-custom h5 {
-      margin: 0;
-    }
-
     .chart-container {
       background-color: #fff;
       border-radius: 8px;
       padding: 20px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-
-    .filter-section {
-      background-color: #e9ecef;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-
-    /* Tabela estilizada */
     .table-custom {
       background-color: #fff;
       border-radius: 8px;
       padding: 15px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
     }
-
     .table-custom table {
       width: 100%;
     }
+    .nav-link {
+      cursor: pointer;
+    }
   </style>
 </head>
-
 <body>
   <div class="container-fluid">
     <div class="row">
-      <!-- Coluna lateral (Filtros) -->
+      <!-- Sidebar de navegação -->
       <div class="col-md-2 p-3">
-        <div class="filter-section">
-          <h5>Filtros</h5>
-          <hr />
-          <!-- Exemplos de filtros -->
-          <div class="mb-3">
-            <label for="filtroCategoria" class="form-label">Categoria</label>
-            <select class="form-select" id="filtroCategoria">
-              <option>Todos</option>
-              <option>Categoria A</option>
-              <option>Categoria B</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="filtroSubcategoria" class="form-label">Subcategoria</label>
-            <select class="form-select" id="filtroSubcategoria">
-              <option>Todos</option>
-              <option>Sub A</option>
-              <option>Sub B</option>
-            </select>
-          </div>
-          <button class="btn btn-primary w-100">Aplicar</button>
-        </div>
+        <h5>Navegação</h5>
+        <hr />
+        <ul class="nav flex-column">
+          <li class="nav-item"><a class="nav-link" href="#usuarios">Usuários (credesh)</a></li>
+          <li class="nav-item"><a class="nav-link" href="#vendas">Vendas (credesh)</a></li>
+          <li class="nav-item"><a class="nav-link" href="#vendas_cartao_dia">Vendas Cartão Dia (credesh)</a></li>
+          <li class="nav-item"><a class="nav-link" href="#vendas_energia">Vendas Energia (credesh)</a></li>
+          <li class="nav-item"><a class="nav-link" href="#dashboard_presets">Dashboard Presets (consignado)</a></li>
+          <li class="nav-item"><a class="nav-link" href="#dias_trabalho">Dias de Trabalho (consignado)</a></li>
+          <li class="nav-item"><a class="nav-link" href="#metas_consignado">Metas Consignado (consignado)</a></li>
+          <li class="nav-item"><a class="nav-link" href="#metas_consultores_consignado">Metas Consultores (consignado)</a></li>
+          <li class="nav-item"><a class="nav-link" href="#metas_setor_consignado">Metas Setor (consignado)</a></li>
+        </ul>
       </div>
 
-      <!-- Conteúdo principal do Dashboard -->
+      <!-- Conteúdo principal -->
       <div class="col-md-10 p-4">
-        <h2 class="mb-4">Vendas Ano x Ano</h2>
+        <h2 class="mb-4">Dashboard Administrador - Acesso Completo</h2>
 
-        <!-- Cards superiores (Faturamento, etc.) -->
-        <div class="row dashboard-section">
-          <!-- Card 1 -->
-          <div class="col-md-3">
-            <div class="card card-custom text-center p-3">
-              <h5>R$85M</h5>
-              <p class="mb-0">Faturamento</p>
-            </div>
-          </div>
-          <!-- Card 2 -->
-          <div class="col-md-3">
-            <div class="card card-custom text-center p-3">
-              <h5>R$67M</h5>
-              <p class="mb-0">Faturamento Ano Anterior</p>
-            </div>
-          </div>
-          <!-- Card 3 -->
-          <div class="col-md-3">
-            <div class="card card-custom text-center p-3">
-              <h5>27,2%</h5>
-              <p class="mb-0">% Variação YoY</p>
-            </div>
-          </div>
-          <!-- Card 4 (Exemplo adicional) -->
-          <div class="col-md-3">
-            <div class="card card-custom text-center p-3">
-              <h5>...</h5>
-              <p class="mb-0">Outro Indicador</p>
-            </div>
+        <!-- Seção Usuários (Banco 1) -->
+        <div id="usuarios" class="dashboard-section">
+          <h4>Usuários (credesh)</h4>
+          <div class="table-custom">
+            <table class="table table-striped table-sm">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nome</th>
+                  <th>Username</th>
+                  <th>Perfil</th>
+                  <th>Setor</th>
+                  <th>Status</th>
+                  <th>Criado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php while ($row = $usersResult->fetch_assoc()): ?>
+                  <tr>
+                    <td><?= $row['id']; ?></td>
+                    <td><?= $row['nome']; ?></td>
+                    <td><?= $row['username']; ?></td>
+                    <td><?= $row['perfil']; ?></td>
+                    <td><?= $row['setor']; ?></td>
+                    <td><?= ($row['status'] == 1 ? 'Ativo' : 'Inativo'); ?></td>
+                    <td><?= $row['created_at']; ?></td>
+                  </tr>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Gráficos -->
-        <div class="row dashboard-section">
-          <!-- Gráfico 1 (Barra) -->
-          <div class="col-md-7">
-            <div class="chart-container mb-3">
-              <canvas id="barChart"></canvas>
-            </div>
-          </div>
-          <!-- Gráfico 2 (YOY) -->
-          <div class="col-md-5">
-            <div class="chart-container mb-3">
-              <canvas id="yoyChart"></canvas>
-            </div>
+        <!-- Seção Vendas (Banco 1) -->
+        <div id="vendas" class="dashboard-section">
+          <h4>Vendas (credesh)</h4>
+          <div class="table-custom">
+            <table class="table table-striped table-sm">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Data de Registro</th>
+                  <th>Modalidade ID</th>
+                  <th>Setor</th>
+                  <th>Departamento</th>
+                  <th>Status</th>
+                  <th>Consultor ID</th>
+                  <th>Valor</th>
+                  <th>Clientes em Rota</th>
+                  <th>Atendimentos Finalizados</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php while ($row = $vendasResult->fetch_assoc()): ?>
+                  <tr>
+                    <td><?= $row['id']; ?></td>
+                    <td><?= $row['data_registro']; ?></td>
+                    <td><?= $row['modalidade_id']; ?></td>
+                    <td><?= $row['setor']; ?></td>
+                    <td><?= $row['departamento']; ?></td>
+                    <td><?= $row['status']; ?></td>
+                    <td><?= $row['consultor_id']; ?></td>
+                    <td><?= $row['valor']; ?></td>
+                    <td><?= $row['clientes_em_rota']; ?></td>
+                    <td><?= $row['atendimentos_finalizados']; ?></td>
+                  </tr>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Tabela e/ou Lista de Categorias -->
-        <div class="row dashboard-section">
-          <div class="col-md-4">
-            <!-- Exemplo de lista de categorias -->
-            <div class="table-custom">
-              <h5>Categorias</h5>
-              <table class="table table-striped table-sm mt-2">
-                <thead>
+        <!-- Seção Vendas Cartão Dia (Banco 1) -->
+        <div id="vendas_cartao_dia" class="dashboard-section">
+          <h4>Vendas Cartão Dia (credesh)</h4>
+          <div class="table-custom">
+            <table class="table table-striped table-sm">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Supervisor ID</th>
+                  <th>Agente ID</th>
+                  <th>Vendas Total</th>
+                  <th>Cliente Nome</th>
+                  <th>Cliente Endereço</th>
+                  <th>Cliente Número</th>
+                  <th>Cliente Referência</th>
+                  <th>Valor Passar</th>
+                  <th>Data de Registro</th>
+                  <th>Rota Status</th>
+                  <th>Rota Ordem</th>
+                  <th>Valor Recebido</th>
+                  <th>Parcelas</th>
+                  <th>Fonte</th>
+                  <th>Turno</th>
+                  <th>Pagamento</th>
+                  <th>Horário</th>
+                  <th>Valor Pendente</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php while ($row = $vendasCartaoDiaResult->fetch_assoc()): ?>
                   <tr>
-                    <th>Categoria</th>
-                    <th>Ano Atual</th>
-                    <th>Ano Anterior</th>
+                    <td><?= $row['id']; ?></td>
+                    <td><?= $row['supervisor_id']; ?></td>
+                    <td><?= $row['agente_id']; ?></td>
+                    <td><?= $row['vendas_total']; ?></td>
+                    <td><?= $row['cliente_nome']; ?></td>
+                    <td><?= $row['cliente_endereco']; ?></td>
+                    <td><?= $row['cliente_numero']; ?></td>
+                    <td><?= $row['cliente_referencia']; ?></td>
+                    <td><?= $row['valor_passar']; ?></td>
+                    <td><?= $row['data_registro']; ?></td>
+                    <td><?= $row['rota_status']; ?></td>
+                    <td><?= $row['rota_ordem']; ?></td>
+                    <td><?= $row['valor_recebido']; ?></td>
+                    <td><?= $row['parcelas']; ?></td>
+                    <td><?= $row['fonte']; ?></td>
+                    <td><?= $row['turno']; ?></td>
+                    <td><?= $row['pagamento']; ?></td>
+                    <td><?= $row['horario']; ?></td>
+                    <td><?= $row['valor_pendente']; ?></td>
                   </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Bebidas</td>
-                    <td>R$ 9,8M</td>
-                    <td>R$ 8,1M</td>
-                  </tr>
-                  <tr>
-                    <td>Vestuário</td>
-                    <td>R$ 12,5M</td>
-                    <td>R$ 11,2M</td>
-                  </tr>
-                  <tr>
-                    <td>Alimentos</td>
-                    <td>R$ 15,2M</td>
-                    <td>R$ 14,0M</td>
-                  </tr>
-                  <!-- Adicione mais linhas conforme necessário -->
-                </tbody>
-              </table>
-            </div>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
           </div>
-          <div class="col-md-8">
-            <!-- Espaço adicional para outro conteúdo -->
-            <div class="table-custom">
-              <h5>Outra Seção ou Tabela</h5>
-              <table class="table table-striped table-sm mt-2">
-                <thead>
+        </div>
+
+        <!-- Seção Vendas Energia (Banco 1) -->
+        <div id="vendas_energia" class="dashboard-section">
+          <h4>Vendas Energia (credesh)</h4>
+          <div class="table-custom">
+            <table class="table table-striped table-sm">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Agente ID</th>
+                  <th>Valor Venda</th>
+                  <th>Quantidade Contratos</th>
+                  <th>Status</th>
+                  <th>Setor</th>
+                  <th>Data de Registro</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php while ($row = $vendasEnergiaResult->fetch_assoc()): ?>
                   <tr>
-                    <th>Item</th>
-                    <th>Valor</th>
+                    <td><?= $row['id']; ?></td>
+                    <td><?= $row['agente_id']; ?></td>
+                    <td><?= $row['valor_venda']; ?></td>
+                    <td><?= $row['quantidade_contratos']; ?></td>
+                    <td><?= $row['status']; ?></td>
+                    <td><?= $row['setor']; ?></td>
+                    <td><?= $row['data_registro']; ?></td>
                   </tr>
-                </thead>
-                <tbody>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Seção Dashboard Presets (Banco 2) -->
+        <div id="dashboard_presets" class="dashboard-section">
+          <h4>Dashboard Presets (consignado)</h4>
+          <div class="table-custom">
+            <table class="table table-striped table-sm">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Preset Name</th>
+                  <th>Consultores JSON</th>
+                  <th>Criado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php while ($row = $dashboardPresetsResult->fetch_assoc()): ?>
                   <tr>
-                    <td>Exemplo 1</td>
-                    <td>...</td>
+                    <td><?= $row['id']; ?></td>
+                    <td><?= $row['preset_name']; ?></td>
+                    <td><?= $row['consultores_json']; ?></td>
+                    <td><?= $row['created_at']; ?></td>
                   </tr>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Seção Dias de Trabalho (Banco 2) -->
+        <div id="dias_trabalho" class="dashboard-section">
+          <h4>Dias de Trabalho (consignado)</h4>
+          <div class="table-custom">
+            <table class="table table-striped table-sm">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Mês</th>
+                  <th>Total de Dias</th>
+                  <th>Criado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php while ($row = $diasTrabalhoResult->fetch_assoc()): ?>
                   <tr>
-                    <td>Exemplo 2</td>
-                    <td>...</td>
+                    <td><?= $row['id']; ?></td>
+                    <td><?= $row['mes']; ?></td>
+                    <td><?= $row['total_dias']; ?></td>
+                    <td><?= $row['created_at']; ?></td>
                   </tr>
-                  <!-- Adicione mais linhas conforme necessário -->
-                </tbody>
-              </table>
-            </div>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Seção Metas Consignado (Banco 2) -->
+        <div id="metas_consignado" class="dashboard-section">
+          <h4>Metas Consignado (consignado)</h4>
+          <div class="table-custom">
+            <table class="table table-striped table-sm">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Dias Trabalhados</th>
+                  <th>Data Início</th>
+                  <th>Data Fim</th>
+                  <th>Criado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php while ($row = $metasConsignadoResult->fetch_assoc()): ?>
+                  <tr>
+                    <td><?= $row['id']; ?></td>
+                    <td><?= $row['dias_trabalhados']; ?></td>
+                    <td><?= $row['data_inicio']; ?></td>
+                    <td><?= $row['data_fim']; ?></td>
+                    <td><?= $row['created_at']; ?></td>
+                  </tr>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Seção Metas Consultores Consignado (Banco 2) -->
+        <div id="metas_consultores_consignado" class="dashboard-section">
+          <h4>Metas Consultores Consignado (consignado)</h4>
+          <div class="table-custom">
+            <table class="table table-striped table-sm">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Consultor ID</th>
+                  <th>Meta Diária</th>
+                  <th>Meta Semanal</th>
+                  <th>Meta Mensal</th>
+                  <th>Período</th>
+                  <th>Criado em</th>
+                  <th>Atualizado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php while ($row = $metasConsultoresConsignadoResult->fetch_assoc()): ?>
+                  <tr>
+                    <td><?= $row['id']; ?></td>
+                    <td><?= $row['consultor_id']; ?></td>
+                    <td><?= $row['meta_diaria']; ?></td>
+                    <td><?= $row['meta_semanal']; ?></td>
+                    <td><?= $row['meta_mensal']; ?></td>
+                    <td><?= $row['periodo']; ?></td>
+                    <td><?= $row['created_at']; ?></td>
+                    <td><?= $row['updated_at']; ?></td>
+                  </tr>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Seção Metas Setor Consignado (Banco 2) -->
+        <div id="metas_setor_consignado" class="dashboard-section">
+          <h4>Metas Setor Consignado (consignado)</h4>
+          <div class="table-custom">
+            <table class="table table-striped table-sm">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Meta Diária</th>
+                  <th>Meta Semanal</th>
+                  <th>Meta Mensal</th>
+                  <th>Período</th>
+                  <th>Criado em</th>
+                  <th>Atualizado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php while ($row = $metasSetorConsignadoResult->fetch_assoc()): ?>
+                  <tr>
+                    <td><?= $row['id']; ?></td>
+                    <td><?= $row['meta_diaria']; ?></td>
+                    <td><?= $row['meta_semanal']; ?></td>
+                    <td><?= $row['meta_mensal']; ?></td>
+                    <td><?= $row['periodo']; ?></td>
+                    <td><?= $row['created_at']; ?></td>
+                    <td><?= $row['updated_at']; ?></td>
+                  </tr>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -213,81 +405,13 @@ include(HEADER_FILE);
   </div> <!-- Fim do container-fluid -->
 
   <!-- Bootstrap JS -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-  <!-- Chart.js -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Scripts de inicialização dos gráficos -->
-  <script>
-    // Exemplo de gráfico de barras
-    const ctxBar = document.getElementById('barChart').getContext('2d');
-    const barChart = new Chart(ctxBar, {
-      type: 'bar',
-      data: {
-        labels: ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'],
-        datasets: [{
-          label: 'Ano Atual',
-          data: [12, 19, 3, 5, 2, 3, 10, 8, 12, 14, 7, 9],
-          backgroundColor: '#3498db'
-        }, {
-          label: 'Ano Anterior',
-          data: [10, 15, 4, 7, 3, 2, 9, 6, 10, 12, 5, 8],
-          backgroundColor: '#2ecc71'
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'top'
-          },
-          title: {
-            display: true,
-            text: 'Faturamento Mensal'
-          }
-        }
-      }
-    });
-
-    // Exemplo de gráfico de barras para YOY
-    const ctxYoy = document.getElementById('yoyChart').getContext('2d');
-    const yoyChart = new Chart(ctxYoy, {
-      type: 'bar',
-      data: {
-        labels: ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'],
-        datasets: [{
-          label: '% YoY',
-          data: [5.2, 8.0, 2.3, 10.5, 7.8, 3.2, 9.1, 4.4, 6.5, 5.0, 7.7, 3.8],
-          backgroundColor: '#f39c12'
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'top'
-          },
-          title: {
-            display: true,
-            text: 'Variação YoY por Mês'
-          }
-        },
-        scales: {
-          y: {
-            ticks: {
-              callback: function(value) {
-                return value + '%';
-              }
-            }
-          }
-        }
-      }
-    });
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-<?php include(FOOTER_FILE); ?>
+<?php
+include(FOOTER_FILE); // Inclua o footer conforme sua estrutura
 
+// Fecha as conexões com os dois bancos
+$conn1->close();
+$conn2->close();
+?>
 </html>
