@@ -12,7 +12,7 @@ $username = $_SESSION['username'] ?? 'Usuário';
 // Definição correta do link de início baseado no perfil e setor
 if ($perfil === 'admin') {
   $inicio_link = DASH;
-} elseif ($perfil === 'supervisor') {
+} elseif ($perfil === 'supervisor' || $perfil === 'tv_indoor') {
   switch ($setor) {
     case 'Cartão':
       $inicio_link = DASH_CARTAO;
@@ -33,7 +33,7 @@ if ($perfil === 'admin') {
       $inicio_link = SAIR;
   }
 } else {
-  $inicio_link = DASH;
+  $inicio_link = SAIR;
 }
 ?>
 
@@ -44,6 +44,8 @@ if ($perfil === 'admin') {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CREDASH</title>
+  <link rel="icon" href="../assets/img/logocredash.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="../assets/img/logocredash.ico" type="image/x-icon">
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>

@@ -4,22 +4,22 @@ require_once __DIR__ . '/../../absoluto.php';
 require_once __DIR__ . '/../../db/config.php';
 include(HEADER_FILE);
 
-// Verifica se o usuário logado é supervisor e do setor Cartão
+// Validação de acesso para supervisores do setor Cartão
 if (!isset($_SESSION['user_id']) || ($_SESSION['perfil'] ?? '') !== 'supervisor' || ($_SESSION['setor'] ?? '') !== 'Cartão') {
   die("Acesso negado. Apenas supervisores do setor Cartão podem acessar esta página.");
 }
 
-// Conecta ao banco
+// Conexão com o banco de dados
 $conn = new mysqli($host, $db_username, $db_password, $db_name);
 if ($conn->connect_error) {
   die("Falha na conexão: " . $conn->connect_error);
 }
 
 // Determina mês e dia atuais
-$currentMonth = date('Y-m');  // Ex: "2023-03"
-$currentDay   = date('Y-m-d'); // Ex: "2023-03-28"
+$currentMonth = date('Y-m');
+$currentDay   = date('Y-m-d');
 
-// Verifica se a supervisora quer exibir os gráficos
+// Verifica se os gráficos devem ser exibidos
 $showCharts = isset($_GET['show_charts']) && $_GET['show_charts'] === '1';
 
 // 1. Meta do Setor Cartão
@@ -32,18 +32,18 @@ $stmt->close();
 $metaSetorMes = $resultSector['meta_mes'] ?? 0;
 $metaSetorDia = $resultSector['meta_dia'] ?? 0;
 
-// 2. Dados dos Agentes (somamos apenas valor_passar das rotas concluídas)
+// 2. Dados dos Agentes
 $sqlAgents = "
   SELECT a.id AS agente_id,
          a.nome AS agente_nome,
          IFNULL((SELECT SUM(valor_passar)
-                 FROM vendas_cartao_dia
-                 WHERE agente_id = a.id
-                   AND DATE_FORMAT(data_registro, '%Y-%m') = ?), 0) AS total_mes,
+                   FROM vendas_cartao_dia
+                   WHERE agente_id = a.id
+                     AND DATE_FORMAT(data_registro, '%Y-%m') = ?), 0) AS total_mes,
          IFNULL((SELECT SUM(valor_passar)
-                 FROM vendas_cartao_dia
-                 WHERE agente_id = a.id
-                   AND DATE(data_registro) = ?), 0) AS total_dia,
+                   FROM vendas_cartao_dia
+                   WHERE agente_id = a.id
+                     AND DATE(data_registro) = ?), 0) AS total_dia,
          IFNULL(m.meta_mes, 0) AS meta_mes,
          IFNULL(m.meta_dia, 0) AS meta_dia
   FROM agentes_cartao a
@@ -63,26 +63,11 @@ $stmt->close();
 
 // 3. Lista de Clientes em Rota (hoje)
 $sqlClients = "
-  SELECT 
-    id,
-    agente_id,
-    cliente_nome,
-    cliente_endereco,
-    cliente_numero,
-    cliente_referencia,
-    valor_passar,
-    valor_pendente,
-    valor_recebido,
-    parcelas,
-    fonte,
-    turno,
-    horario,
-    pagamento,
-    rota_status,
-    rota_ordem
+  SELECT id, agente_id, cliente_nome, cliente_endereco, cliente_numero, cliente_referencia,
+         valor_passar, valor_pendente, valor_recebido, parcelas, fonte, turno, horario,
+         pagamento, rota_status, rota_ordem
   FROM vendas_cartao_dia
-  WHERE supervisor_id = ?
-    AND DATE(data_registro) = ?
+  WHERE supervisor_id = ? AND DATE(data_registro) = ?
   ORDER BY id ASC
 ";
 $stmt = $conn->prepare($sqlClients);
@@ -96,9 +81,8 @@ while ($row = $resultClients->fetch_assoc()) {
 $stmt->close();
 $conn->close();
 
-// Calcular Resumos (Mês e Dia) para exibir nos cards
-$somaMes = 0;
-$somaDia = 0;
+// Cálculo dos resumos (mês e dia)
+$somaMes = $somaDia = 0;
 foreach ($agentsData as $a) {
   $somaMes += floatval($a['total_mes']);
   $somaDia += floatval($a['total_dia']);
@@ -106,7 +90,7 @@ foreach ($agentsData as $a) {
 $faltaMes = $metaSetorMes - $somaMes;
 $faltaDia = $metaSetorDia - $somaDia;
 
-// Preparar arrays para gráficos por agente
+// Preparação de arrays para gráficos
 $agentsLabel   = [];
 $agentsDiaMeta = [];
 $agentsDiaReal = [];
@@ -126,106 +110,90 @@ foreach ($agentsData as $agent) {
 
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard Cartão - Visual Melhorado</title>
+  <title>Dashboard Cartão</title>
+  <link rel="icon" href="<?= ICON_PATH ?>" type="image/x-icon">
+  <link rel="shortcut icon" href="<?= ICON_PATH ?>" type="image/x-icon">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Leaflet CSS para o mapa -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       background-color: #f9f9f9;
     }
-
-    /* Cabeçalho (navbar-like) */
+    /* Cabeçalho */
     .header-bar {
       background-color: #fff;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       padding: 1rem;
       margin-bottom: 1rem;
     }
-
     .header-bar h1 {
       font-size: 1.5rem;
       margin: 0;
       font-weight: 600;
     }
-
     /* Cartões e containers */
     .card-custom {
       background: #fff;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      margin-bottom: 1rem;
       padding: 1rem;
-    }
-
-    .card-custom h4 {
       margin-bottom: 1rem;
-      font-weight: 600;
+      transition: transform 0.2s;
     }
-
+    .card-custom:hover {
+      transform: scale(1.01);
+    }
     .chart-canvas {
       height: 200px !important;
-      /* Reduz a altura dos gráficos */
     }
-
     #map {
       height: 350px;
-      /* Ajuste conforme seu gosto */
     }
   </style>
 </head>
 
 <body>
-
-  <!-- Topo -->
-  <div class="header-bar d-flex align-items-center justify-content-between">
-    <div>
-      <h1 class="text-primary">Credash - Performance Cartão</h1>
-      <small class="text-muted">Painel de acompanhamento e métricas</small>
+  <!-- Cabeçalho com Filtro -->
+  <div class="header-bar d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+    <div class="mb-3 mb-md-0">
+      <h1 class="text-primary">Filtro</h1>
+      <small class="text-muted">Acompanhe as métricas e desempenho</small>
     </div>
-    <div>
-      <!-- Exemplo de datas e "representante" para simular layout -->
-      <form class="d-flex gap-2" method="GET">
-        <div>
-          <label for="dataInicio" class="form-label mb-0"><small>Data Início</small></label>
-          <input type="date" id="dataInicio" name="dataInicio" class="form-control form-control-sm" value="<?= date('Y-m-01') ?>">
-        </div>
-        <div>
-          <label for="dataFim" class="form-label mb-0"><small>Data Fim</small></label>
-          <input type="date" id="dataFim" name="dataFim" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>">
-        </div>
-        <div>
-          <label for="showChartsCheck" class="form-label mb-0"><small>Exibir Gráficos</small></label><br>
-          <input class="form-check-input" type="checkbox" name="show_charts" value="1" id="showChartsCheck"
-            <?php if ($showCharts) echo "checked"; ?>>
-        </div>
-        <button class="btn btn-primary btn-sm align-self-end">Aplicar</button>
-        <a class="btn btn-primary btn-sm align-self-end" href="<?= DASH_CARTAO ?>">Limpar</a>
-      </form>
-    </div>
+    <form class="d-flex gap-2 align-items-end" method="GET">
+      <div class="form-group">
+        <label for="dataInicio" class="form-label">Data Início</label>
+        <input type="date" id="dataInicio" name="dataInicio" class="form-control form-control-sm" value="<?= date('Y-m-01') ?>">
+      </div>
+      <div class="form-group">
+        <label for="dataFim" class="form-label">Data Fim</label>
+        <input type="date" id="dataFim" name="dataFim" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>">
+      </div>
+      <div class="form-check mt-2">
+        <input class="form-check-input" type="checkbox" name="show_charts" value="1" id="showChartsCheck" <?php if ($showCharts) echo "checked"; ?>>
+        <label class="form-check-label" for="showChartsCheck">Exibir Gráficos</label>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary btn-sm">Aplicar</button>
+        <a class="btn btn-outline-secondary btn-sm" href="<?= DASH_CARTAO ?>">Limpar</a>
+      </div>
+    </form>
   </div>
 
   <div class="container-fluid">
     <div class="row">
-      <!-- Coluna da esquerda (cards) -->
+      <!-- Coluna dos Cards -->
       <div class="col-md-3">
-        <!-- Card: Meta do Setor -->
         <div class="card-custom">
           <h4>Meta do Setor (<?= $currentMonth ?>)</h4>
           <p><strong>Meta Mensal:</strong> R$ <?= number_format($metaSetorMes, 2, ',', '.') ?></p>
           <p><strong>Meta Diária:</strong> R$ <?= number_format($metaSetorDia, 2, ',', '.') ?></p>
         </div>
-
-        <!-- Card: Resumo (Mês) -->
         <div class="card-custom">
           <h4>Resumo (Mês)</h4>
           <p><strong>Total Mês (Agentes):</strong> R$ <?= number_format($somaMes, 2, ',', '.') ?></p>
           <p><strong>Falta (Mês):</strong> R$ <?= number_format($faltaMes, 2, ',', '.') ?></p>
         </div>
-
-        <!-- Card: Resumo (Dia) -->
         <div class="card-custom">
           <h4>Resumo (Dia)</h4>
           <p><strong>Total Dia (Agentes):</strong> R$ <?= number_format($somaDia, 2, ',', '.') ?></p>
@@ -233,9 +201,9 @@ foreach ($agentsData as $agent) {
         </div>
       </div>
 
-      <!-- Coluna principal -->
+      <!-- Coluna Principal -->
       <div class="col-md-9">
-        <!-- Seção de desempenho dos Agentes -->
+        <!-- Tabela de Desempenho dos Agentes -->
         <div class="card-custom">
           <h4>Desempenho dos Agentes</h4>
           <div class="table-responsive">
@@ -256,150 +224,133 @@ foreach ($agentsData as $agent) {
                   $metaMesA   = floatval($agent['meta_mes']);
                   $totalMesA  = floatval($agent['total_mes']);
                   $faltamMesA = $metaMesA - $totalMesA;
-
                   $metaDiaA   = floatval($agent['meta_dia']);
                   $totalDiaA  = floatval($agent['total_dia']);
                   $faltamDiaA = $metaDiaA - $totalDiaA;
                 ?>
-                  <tr>
-                    <td><?= htmlspecialchars($agent['agente_nome']) ?></td>
-                    <td>R$ <?= number_format($metaMesA, 2, ',', '.') ?></td>
-                    <td>R$ <?= number_format($totalMesA, 2, ',', '.') ?></td>
-                    <td>R$ <?= number_format($faltamMesA, 2, ',', '.') ?></td>
-                    <td>R$ <?= number_format($metaDiaA, 2, ',', '.') ?></td>
-                    <td>R$ <?= number_format($totalDiaA, 2, ',', '.') ?></td>
-                    <td>R$ <?= number_format($faltamDiaA, 2, ',', '.') ?></td>
-                  </tr>
+                <tr>
+                  <td><?= htmlspecialchars($agent['agente_nome']) ?></td>
+                  <td>R$ <?= number_format($metaMesA, 2, ',', '.') ?></td>
+                  <td>R$ <?= number_format($totalMesA, 2, ',', '.') ?></td>
+                  <td>R$ <?= number_format($faltamMesA, 2, ',', '.') ?></td>
+                  <td>R$ <?= number_format($metaDiaA, 2, ',', '.') ?></td>
+                  <td>R$ <?= number_format($totalDiaA, 2, ',', '.') ?></td>
+                  <td>R$ <?= number_format($faltamDiaA, 2, ',', '.') ?></td>
+                </tr>
                 <?php endforeach; ?>
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- Se a supervisora escolheu exibir gráficos -->
+        <!-- Seção de Gráficos -->
         <?php if ($showCharts): ?>
-          <div class="row">
-            <!-- Gráfico (Setor): Meta x Realizado (Mês) -->
-            <div class="col-md-4">
-              <div class="card-custom">
-                <h4>Gráfico Setor (Mês)</h4>
-                <canvas id="barChart" class="chart-canvas"></canvas>
-              </div>
-            </div>
-
-            <!-- Gráfico por Agente (Mês) -->
-            <div class="col-md-4">
-              <div class="card-custom">
-                <h4>Agente (Mês)</h4>
-                <canvas id="barMesAgente" class="chart-canvas"></canvas>
-              </div>
-            </div>
-
-            <!-- Gráfico por Agente (Dia) -->
-            <div class="col-md-4">
-              <div class="card-custom">
-                <h4>Agente (Dia)</h4>
-                <canvas id="barDiaAgente" class="chart-canvas"></canvas>
-              </div>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card-custom">
+              <h4>Gráfico Setor (Mês)</h4>
+              <canvas id="barChart" class="chart-canvas"></canvas>
             </div>
           </div>
+          <div class="col-md-4">
+            <div class="card-custom">
+              <h4>Agente (Mês)</h4>
+              <canvas id="barMesAgente" class="chart-canvas"></canvas>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card-custom">
+              <h4>Agente (Dia)</h4>
+              <canvas id="barDiaAgente" class="chart-canvas"></canvas>
+            </div>
+          </div>
+        </div>
         <?php else: ?>
-          <div class="card-custom">
-            <p class="text-muted">Gráficos não exibidos. Marque "Exibir Gráficos" e clique em "Aplicar" para vê-los.</p>
-          </div>
+        <div class="card-custom">
+          <p class="text-muted">Marque "Exibir Gráficos" e clique em "Aplicar" para visualizar os gráficos.</p>
+        </div>
         <?php endif; ?>
 
-        <!-- Clientes em Rota (Hoje) -->
+        <!-- Tabela de Clientes em Rota -->
         <div class="card-custom mt-3">
           <h4>Clientes em Rota (Hoje)</h4>
           <?php if (count($clients) > 0): ?>
-            <div class="table-responsive">
-              <table class="table table-bordered table-sm align-middle">
-                <thead class="table-light">
-                  <tr>
-                    <th>Ordem/ID</th>
-                    <th>Cliente</th>
-                    <th>Endereço</th>
-                    <th>Número</th>
-                    <th>Referência</th>
-                    <th>Valor</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <?php foreach ($clients as $client): ?>
-                    <?php
-                    // Se rota está concluída, exibe valor_passar; senão, exibe valor_pendente
-                    $valorExibir = ($client['rota_status'] === 'concluida')
-                      ? $client['valor_passar']
-                      : $client['valor_pendente'];
-                    ?>
-                    <tr>
-                      <td><?= $client['rota_ordem'] . " / #" . $client['id']; ?></td>
-                      <td><?= htmlspecialchars($client['cliente_nome']); ?></td>
-                      <td><?= htmlspecialchars($client['cliente_endereco']); ?></td>
-                      <td><?= htmlspecialchars($client['cliente_numero']); ?></td>
-                      <td><?= htmlspecialchars($client['cliente_referencia']); ?></td>
-                      <td>R$ <?= number_format($valorExibir, 2, ',', '.'); ?></td>
-                      <td>
-                        <?php if ($client['rota_status'] === 'concluida'): ?>
-                          <span class="badge bg-success">Concluída</span>
-                        <?php else: ?>
-                          <span class="badge bg-warning text-dark">Pendente</span>
-                        <?php endif; ?>
-                      </td>
-                      <td>
-                        <!-- Botão Visualizar -->
-                        <button class="btn btn-sm btn-info"
-                          data-bs-toggle="modal"
-                          data-bs-target="#viewModal"
-                          data-client='<?php echo json_encode($client, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'>
-                          Visualizar
-                        </button>
-                        <!-- Botão Editar -->
-                        <button class="btn btn-sm btn-secondary"
-                          data-bs-toggle="modal"
-                          data-bs-target="#editModal"
-                          data-id="<?php echo $client['id']; ?>"
-                          data-endereco="<?php echo addslashes($client['cliente_endereco']); ?>"
-                          data-numero="<?php echo addslashes($client['cliente_numero']); ?>"
-                          data-ref="<?php echo addslashes($client['cliente_referencia']); ?>"
-                          data-ordem="<?php echo (int)$client['rota_ordem']; ?>">
-                          Editar
-                        </button>
-                        <!-- Botão Concluir -->
-                        <?php if ($client['rota_status'] !== 'concluida'): ?>
-                          <button class="btn btn-sm btn-success"
-                            onclick="marcarConcluida(<?php echo $client['id']; ?>)">Concluir</button>
-                        <?php endif; ?>
-                        <!-- Botão Mapa (Google Maps) -->
-                        <button class="btn btn-sm btn-warning"
-                          onclick="verRota('<?php echo addslashes($client['cliente_endereco']); ?>')">
-                          Mapa
-                        </button>
-                      </td>
-                    </tr>
-                  <?php endforeach; ?>
-                </tbody>
-              </table>
-            </div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Ordem/ID</th>
+                  <th>Cliente</th>
+                  <th>Endereço</th>
+                  <th>Número</th>
+                  <th>Referência</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($clients as $client):
+                  $valorExibir = ($client['rota_status'] === 'concluida') ? $client['valor_passar'] : $client['valor_pendente'];
+                ?>
+                <tr>
+                  <td><?= $client['rota_ordem'] . " / #" . $client['id']; ?></td>
+                  <td><?= htmlspecialchars($client['cliente_nome']); ?></td>
+                  <td><?= htmlspecialchars($client['cliente_endereco']); ?></td>
+                  <td><?= htmlspecialchars($client['cliente_numero']); ?></td>
+                  <td><?= htmlspecialchars($client['cliente_referencia']); ?></td>
+                  <td>R$ <?= number_format($valorExibir, 2, ',', '.'); ?></td>
+                  <td>
+                    <?php if ($client['rota_status'] === 'concluida'): ?>
+                      <span class="badge bg-success">Concluída</span>
+                    <?php else: ?>
+                      <span class="badge bg-warning text-dark">Pendente</span>
+                    <?php endif; ?>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewModal" 
+                      data-client='<?php echo json_encode($client, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'
+                      aria-label="Visualizar cliente">
+                      Visualizar
+                    </button>
+                    <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#editModal" 
+                      data-id="<?php echo $client['id']; ?>" 
+                      data-endereco="<?php echo addslashes($client['cliente_endereco']); ?>"
+                      data-numero="<?php echo addslashes($client['cliente_numero']); ?>"
+                      data-ref="<?php echo addslashes($client['cliente_referencia']); ?>"
+                      data-ordem="<?php echo (int)$client['rota_ordem']; ?>"
+                      aria-label="Editar rota">
+                      Editar
+                    </button>
+                    <?php if ($client['rota_status'] !== 'concluida'): ?>
+                      <button class="btn btn-sm btn-success" onclick="marcarConcluida(<?php echo $client['id']; ?>)" aria-label="Concluir rota">
+                        Concluir
+                      </button>
+                    <?php endif; ?>
+                    <button class="btn btn-sm btn-warning" onclick="verRota('<?php echo addslashes($client['cliente_endereco']); ?>')" aria-label="Visualizar rota no mapa">
+                      Mapa
+                    </button>
+                  </td>
+                </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
           <?php else: ?>
-            <p class="text-muted">Nenhum cliente em rota hoje.</p>
+          <p class="text-muted">Nenhum cliente em rota hoje.</p>
           <?php endif; ?>
         </div>
 
         <!-- Mapa das Rotas -->
         <div class="card-custom mt-3">
           <h4>Mapa das Rotas</h4>
-          <div id="map"></div>
+          <div id="map">Carregando mapa...</div>
         </div>
-
       </div> <!-- fim col-md-9 -->
     </div> <!-- fim row -->
   </div> <!-- fim container-fluid -->
 
-  <!-- MODAL VISUALIZAR -->
+  <!-- Modal Visualizar -->
   <div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -428,7 +379,7 @@ foreach ($agentsData as $agent) {
     </div>
   </div>
 
-  <!-- MODAL EDITAR ROTA -->
+  <!-- Modal Editar Rota -->
   <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <form id="editForm" method="POST" action="editar_rota.php">
@@ -465,20 +416,20 @@ foreach ($agentsData as $agent) {
     </div>
   </div>
 
-  <!-- Leaflet JS -->
+  <!-- Scripts: Leaflet, Chart.js e Bootstrap -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Inicializa o mapa
+    // Inicializa o mapa com centralização e zoom padrão
     var map = L.map('map').setView([-15.7801, -47.9292], 4);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // Geocodifica e adiciona marcadores
+    // Função para geocodificação e inclusão de marcadores
     function geocodeAddress(address, callback) {
       fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(address))
-        .then(r => r.json())
+        .then(response => response.json())
         .then(data => {
           if (data && data.length > 0) {
             callback(data[0].lat, data[0].lon);
@@ -486,8 +437,8 @@ foreach ($agentsData as $agent) {
             callback(null, null);
           }
         })
-        .catch(err => {
-          console.error(err);
+        .catch(error => {
+          console.error(error);
           callback(null, null);
         });
     }
@@ -497,7 +448,7 @@ foreach ($agentsData as $agent) {
       marker.bindPopup(popupContent);
     }
 
-    // Carrega clientes e só exibe no mapa se rota_status != 'concluida'
+    // Exibe somente clientes com rota pendente no mapa
     var clientsJS = <?php echo json_encode($clients, JSON_UNESCAPED_UNICODE); ?>;
     clientsJS.forEach(function(c) {
       if (c.rota_status !== 'concluida') {
@@ -506,57 +457,50 @@ foreach ($agentsData as $agent) {
           if (lat && lng) {
             var valorExibir = (c.rota_status === 'concluida') ? c.valor_passar : c.valor_pendente;
             var popup = "<strong>" + c.cliente_nome + "</strong><br>" +
-              "Endereço: " + address + "<br>" +
-              "Referência: " + (c.cliente_referencia || '') + "<br>" +
-              "Valor: R$ " + parseFloat(valorExibir).toFixed(2) + "<br>" +
-              "Valor Recebido: R$ " + parseFloat(c.valor_recebido).toFixed(2) + "<br>" +
-              "Parcelas: " + c.parcelas + "<br>" +
-              "Fonte: " + (c.fonte || '') + "<br>" +
-              "Turno: " + (c.turno || '') + "<br>" +
-              "Horário: " + (c.horario || '') + "<br>" +
-              "Pagamento: " + (c.pagamento || '');
+                        "Endereço: " + address + "<br>" +
+                        "Referência: " + (c.cliente_referencia || '') + "<br>" +
+                        "Valor: R$ " + parseFloat(valorExibir).toFixed(2) + "<br>" +
+                        "Valor Recebido: R$ " + parseFloat(c.valor_recebido).toFixed(2) + "<br>" +
+                        "Parcelas: " + c.parcelas + "<br>" +
+                        "Fonte: " + (c.fonte || '') + "<br>" +
+                        "Turno: " + (c.turno || '') + "<br>" +
+                        "Horário: " + (c.horario || '') + "<br>" +
+                        "Pagamento: " + (c.pagamento || '');
             addMarker(lat, lng, popup);
           }
         });
       }
     });
 
-    // Botão Mapa (Google Maps)
+    // Abre rota no Google Maps
     function verRota(endereco) {
       window.open("https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(endereco), "_blank");
     }
 
-    // Botão Concluir
+    // Confirmação para marcar rota como concluída
     function marcarConcluida(rotaId) {
       if (confirm("Deseja marcar esta rota como concluída?")) {
         window.location.href = "concluir_rota.php?id=" + rotaId;
       }
     }
 
-    // Modal Editar
+    // Configura o modal de edição
     var editModal = document.getElementById('editModal');
     editModal.addEventListener('show.bs.modal', function(event) {
       var button = event.relatedTarget;
-      var rotaId = button.getAttribute('data-id');
-      var endereco = button.getAttribute('data-endereco');
-      var numero = button.getAttribute('data-numero');
-      var ref = button.getAttribute('data-ref');
-      var ordem = button.getAttribute('data-ordem');
-
-      document.getElementById('rota_id').value = rotaId;
-      document.getElementById('rota_ordem').value = ordem;
-      document.getElementById('cliente_endereco_modal').value = endereco;
-      document.getElementById('cliente_numero_modal').value = numero;
-      document.getElementById('cliente_referencia_modal').value = ref;
+      document.getElementById('rota_id').value = button.getAttribute('data-id');
+      document.getElementById('rota_ordem').value = button.getAttribute('data-ordem');
+      document.getElementById('cliente_endereco_modal').value = button.getAttribute('data-endereco');
+      document.getElementById('cliente_numero_modal').value = button.getAttribute('data-numero');
+      document.getElementById('cliente_referencia_modal').value = button.getAttribute('data-ref');
     });
 
-    // Modal Visualizar
+    // Configura o modal de visualização
     var viewModal = document.getElementById('viewModal');
     viewModal.addEventListener('show.bs.modal', function(event) {
       var button = event.relatedTarget;
       var dataStr = button.getAttribute('data-client');
       var c = JSON.parse(dataStr);
-
       var valorExibir = (c.rota_status === 'concluida') ? c.valor_passar : c.valor_pendente;
 
       document.getElementById('viewClienteNome').textContent = c.cliente_nome;
@@ -574,98 +518,84 @@ foreach ($agentsData as $agent) {
     });
   </script>
 
-  <!-- Gráficos Chart.js -->
+  <!-- Gráficos com Chart.js -->
   <?php if ($showCharts): ?>
-    <script>
-      // Gráfico 1: Setor - Meta x Realizado (Mês)
-      var ctxBar = document.getElementById('barChart').getContext('2d');
-      var totalMes = <?= json_encode($somaMes) ?>;
-      var metaMes = <?= json_encode($metaSetorMes) ?>;
-      new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-          labels: ['Realizado', 'Meta'],
-          datasets: [{
-            label: 'Valor (R$)',
-            data: [totalMes, metaMes],
-            backgroundColor: ['#3498db', '#2ecc71']
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
+  <script>
+    // Gráfico Setor (Mês)
+    var ctxBar = document.getElementById('barChart').getContext('2d');
+    new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels: ['Realizado', 'Meta'],
+        datasets: [{
+          label: 'Valor (R$)',
+          data: [<?= json_encode($somaMes) ?>, <?= json_encode($metaSetorMes) ?>],
+          backgroundColor: ['#3498db', '#2ecc71']
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true }
         }
-      });
+      }
+    });
 
-      // Gráfico 2: Por Agente (Mês)
-      var ctxMes = document.getElementById('barMesAgente').getContext('2d');
-      var agentsLabel = <?= json_encode($agentsLabel, JSON_UNESCAPED_UNICODE) ?>;
-      var agentsMesMeta = <?= json_encode($agentsMesMeta) ?>;
-      var agentsMesReal = <?= json_encode($agentsMesReal) ?>;
-      new Chart(ctxMes, {
-        type: 'bar',
-        data: {
-          labels: agentsLabel,
-          datasets: [{
-              label: 'Meta (Mês)',
-              data: agentsMesMeta,
-              backgroundColor: '#95a5a6'
-            },
-            {
-              label: 'Real (Mês)',
-              data: agentsMesReal,
-              backgroundColor: '#3498db'
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true
-            }
+    // Gráfico por Agente (Mês)
+    var ctxMes = document.getElementById('barMesAgente').getContext('2d');
+    new Chart(ctxMes, {
+      type: 'bar',
+      data: {
+        labels: <?= json_encode($agentsLabel, JSON_UNESCAPED_UNICODE) ?>,
+        datasets: [{
+            label: 'Meta (Mês)',
+            data: <?= json_encode($agentsMesMeta) ?>,
+            backgroundColor: '#95a5a6'
+          },
+          {
+            label: 'Real (Mês)',
+            data: <?= json_encode($agentsMesReal) ?>,
+            backgroundColor: '#3498db'
           }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true }
         }
-      });
+      }
+    });
 
-      // Gráfico 3: Por Agente (Dia)
-      var ctxDia = document.getElementById('barDiaAgente').getContext('2d');
-      var agentsDiaMeta = <?= json_encode($agentsDiaMeta) ?>;
-      var agentsDiaReal = <?= json_encode($agentsDiaReal) ?>;
-      new Chart(ctxDia, {
-        type: 'bar',
-        data: {
-          labels: agentsLabel,
-          datasets: [{
-              label: 'Meta (Dia)',
-              data: agentsDiaMeta,
-              backgroundColor: '#2ecc71'
-            },
-            {
-              label: 'Real (Dia)',
-              data: agentsDiaReal,
-              backgroundColor: '#9b59b6'
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true
-            }
+    // Gráfico por Agente (Dia)
+    var ctxDia = document.getElementById('barDiaAgente').getContext('2d');
+    new Chart(ctxDia, {
+      type: 'bar',
+      data: {
+        labels: <?= json_encode($agentsLabel, JSON_UNESCAPED_UNICODE) ?>,
+        datasets: [{
+            label: 'Meta (Dia)',
+            data: <?= json_encode($agentsDiaMeta) ?>,
+            backgroundColor: '#2ecc71'
+          },
+          {
+            label: 'Real (Dia)',
+            data: <?= json_encode($agentsDiaReal) ?>,
+            backgroundColor: '#9b59b6'
           }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true }
         }
-      });
-    </script>
+      }
+    });
+  </script>
   <?php endif; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 <?php include(FOOTER_FILE); ?>
-
 </html>

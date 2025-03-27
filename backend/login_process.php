@@ -1,8 +1,9 @@
 <?php
 session_start();
-include '../db/config1.php';  // arquivo de conexão com o banco
+include '../db/config.php';  // arquivo de conexão com o banco
 include '../absoluto.php';   // arquivo que retorna o caminho absoluto
-include '(header)';
+// include '(header)';
+include HEADER_FILE; // inclui o arquivo de cabeçalho
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   $username = trim($_POST['username'] ?? '');
@@ -30,26 +31,50 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       $_SESSION['setor']    = $user['setor'];
 
       // Redireciona com base no perfil e setor
-      if ($user['perfil'] === 'supervisor') {
-        // Exemplo: se o supervisor for do setor "Cartão"
-        if ($user['setor'] === 'Cartão') {
-          header("Location: " . DASH_CARTAO); // Defina DASH_CARTAO em absoluto.php
-        }
-        // Você pode adicionar outros if/elseif para outros setores:
-        elseif ($user['setor'] === 'Energia') {
-          header("Location: " . DASH_ENERGIA);
-        } elseif ($user['setor'] === 'Consignado') {
-          header("Location: " . DASH_CONSIGNADO);
-        } elseif ($user['setor'] === 'Backoffice') {
-          header("Location: " .  DASH_BACKOFFICE);
-        } elseif ($user['setor'] === 'FGTS') {
-          header("Location: " . DASH_FGTS);
-        } else {
-          // Caso o setor não seja reconhecido, redireciona para um dashboard padrão para supervisores
-          // header("Location: " . DASH_SUPERVISOR);
-        }
-      } elseif ($user['perfil'] === 'admin') {
+      if ($user['perfil'] === 'admin') {
         header("Location: " . DASH); // Dashboard do admin
+      } elseif ($user['perfil'] === 'supervisor') {
+        // Redireciona para páginas de supervisor com base no setor
+        switch ($user['setor']) {
+          case 'Cartão':
+            header("Location: " . DASH_CARTAO);
+            break;
+          case 'Energia':
+            header("Location: " . DASH_ENERGIA);
+            break;
+          case 'Consignado':
+            header("Location: " . DASH_CONSIGNADO);
+            break;
+          case 'Backoffice':
+            header("Location: " . DASH_BACKOFFICE);
+            break;
+          case 'FGTS':
+            header("Location: " . DASH_FGTS);
+            break;
+          default:
+            header("Location: " . SAIR);
+        }
+      } elseif ($user['perfil'] === 'tv_indoor') {
+        // Redireciona para páginas da TV Indoor com base no setor
+        switch ($user['setor']) {
+          case 'Cartão':
+            header("Location: " . DASH_TV_CARTAO);
+            break;
+          case 'Energia':
+            header("Location: " . DASH_TV_ENERGIA);
+            break;
+          case 'Consignado':
+            header("Location: " . DASH_TV_CONSIGNADO);
+            break;
+          case 'Backoffice':
+            header("Location: " . DASH_TV_BACKOFFICE);
+            break;
+          case 'FGTS':
+            header("Location: " . DASH_TV_FGTS);
+            break;
+          default:
+            // header("Location: " . DASH_TV_DEFAULT);
+        }
       } else {
         // Para usuários comuns, redireciona para o dashboard padrão
         header("Location: " . DASH);

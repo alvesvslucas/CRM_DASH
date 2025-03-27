@@ -23,6 +23,10 @@ if (!defined('ASSET_PATH')) {
   // Caminho para a pasta de imagens, CSS, etc. (URL para o navegador)
   define('ASSET_PATH', BASE_URL . 'assets/img');
 }
+if (!defined('ICON_PATH')) {
+  // Caminho para a pasta de imagens, CSS, etc. (URL para o navegador)
+  define('ICON_PATH', BASE_URL . 'assets/img/logocredash.ico');
+}
 
 // Se você tiver um header e footer em arquivos separados, pode definir:
 if (!defined('HEADER_FILE')) {
@@ -123,4 +127,29 @@ if (!defined('DASH_BACKOFFICE')) {
 }
 if (!defined('METAS_BACKOFFICE')) {
   define('METAS_BACKOFFICE', BASE_URL . 'pages/backoffice/metas_backoffice.php');
+}
+// Caminho para o dashboard do setor TV Indoor
+if (!defined('DASH_TV_CARTAO')) {
+  define('DASH_TV_CARTAO', BASE_URL . 'pages/tvindoor/cartao/dashboard_tv_cartao.php');
+}
+if (!defined('DASH_TV_ENERGIA')) {
+  define('DASH_TV_ENERGIA', BASE_URL . 'pages/tvindoor/energia/dashboard_tv_energia.php');
+}
+if (!defined('DASH_TV_CONSIGNADO')) {
+  define('DASH_TV_CONSIGNADO', BASE_URL . 'pages/tvindoor/consignado/dashboard_tv_consignado.php');
+}
+if (!defined('DASH_TV_BACKOFFICE')) {
+  define('DASH_TV_BACKOFFICE', BASE_URL . 'pages/tvindoor/backoffice/dashboard_tv_backoffice.php');
+}
+if (!defined('DASH_TV_FGTS')) {
+  define('DASH_TV_FGTS', BASE_URL . 'pages/tvindoor/fgts/dashboard_tv_fgts.php');
+}
+// if (!defined('DASH_TV_DEFAULT')) {
+//   define('DASH_TV_DEFAULT', BASE_URL . 'pages/tvindoor/default/dashboard_tv_default.php');
+// }
+
+
+// Caminho do audio
+if (!defined('AUDIO_PATH')) {
+  define('AUDIO_PATH', BASE_URL . 'assets/sounds/Impact.mp3');
 }
